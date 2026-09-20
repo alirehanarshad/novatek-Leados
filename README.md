@@ -80,13 +80,13 @@ Open your browser at: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🔐 Default Team Credentials
+## 🔐 Default Admin Credentials & User Governance
 
-On initial startup, a default admin account is seeded automatically:
+On initial startup, a default administrator account is seeded automatically:
 - **Email**: `admin@novatek.io`
 - **Password**: `admin123`
 
-You can also register new team member accounts directly on the `/register` page.
+All user provisioning, credential changes, and password resets are managed securely by administrators inside the **Admin Control Center** (`/admin`). Public self-registration is disabled for workspace integrity.
 
 ---
 

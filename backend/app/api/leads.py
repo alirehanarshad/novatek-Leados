@@ -142,9 +142,11 @@ async def delete_lead(lead_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"message": "Lead deleted successfully", "id": lead_id}
 
+@router.get("/export/csv")
+@router.get("/export")
 @router.post("/export")
 async def export_leads(
-    format: str = Query("csv", pattern="^(csv|json|xlsx)$"),
+    format: str = "csv",
     campaign_id: Optional[int] = None,
     status: Optional[str] = None,
     smb_tier: Optional[str] = None,
