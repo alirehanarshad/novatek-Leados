@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Lock, Mail, ArrowRight, ShieldCheck, Sparkles, KeyRound, AlertCircle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 
@@ -31,23 +30,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickDemoLogin = async () => {
-    setEmail('admin@novatek.io');
-    setPassword('admin123');
-    setError(null);
-    setLoading(true);
-
-    try {
-      const res = await api.login('admin@novatek.io', 'admin123');
-      login(res.access_token, res.user);
-      router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -59,7 +41,7 @@ export default function LoginPage() {
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '440px',
+        maxWidth: '420px',
         display: 'flex',
         flexDirection: 'column',
         gap: '24px'
@@ -83,7 +65,7 @@ export default function LoginPage() {
             Novatek <span className="gradient-text">LeadOS</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Sign in to access your small-business lead intelligence platform.
+            Sign in with your team credentials to access the workspace.
           </p>
         </div>
 
@@ -110,7 +92,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px', display: 'block' }}>
-                Work Email Address
+                Email Address
               </label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -128,7 +110,7 @@ export default function LoginPage() {
 
             <div>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px', display: 'block' }}>
-                Security Password
+                Password
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -154,28 +136,11 @@ export default function LoginPage() {
               <ArrowRight size={16} />
             </button>
           </form>
-
-          {/* Quick Demo Login Option */}
-          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
-            <button
-              type="button"
-              onClick={handleQuickDemoLogin}
-              disabled={loading}
-              className="btn btn-secondary"
-              style={{ width: '100%', padding: '10px', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-            >
-              <KeyRound size={15} color="#818cf8" />
-              <span>1-Click Team Admin Login (admin@novatek.io)</span>
-            </button>
-          </div>
         </div>
 
-        {/* Footer Link */}
-        <div style={{ textAlign: 'center', fontSize: '13.5px', color: 'var(--text-secondary)' }}>
-          Need a new team account?{' '}
-          <Link href="/register" style={{ color: '#818cf8', fontWeight: 600, textDecoration: 'none' }}>
-            Register here
-          </Link>
+        {/* Security Notice */}
+        <div style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+          Authorized team access only. Accounts are managed by your administrator.
         </div>
       </div>
     </div>

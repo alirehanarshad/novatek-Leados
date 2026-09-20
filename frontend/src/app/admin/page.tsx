@@ -15,7 +15,8 @@ import {
   Activity,
   AlertCircle,
   Sparkles,
-  Layers
+  Layers,
+  Edit3
 } from 'lucide-react';
 import { api, TeamUser } from '@/lib/api';
 
@@ -24,13 +25,20 @@ export default function AdminPanelPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Add user modal / form states
+  // Add user modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [newFullName, setNewFullName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newIsAdmin, setNewIsAdmin] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
+
+  // Edit / Password Reset modal states
+  const [editingUser, setEditingUser] = useState<TeamUser | null>(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Status message
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -82,13 +90,36 @@ export default function AdminPanelPage() {
     }
   };
 
-  const handleToggleAdmin = async (u: TeamUser) => {
+  const openEditModal = (u: TeamUser) => {
+    setEditingUser(u);
+    setEditFullName(u.full_name || '');
+    setEditPassword('');
+    setEditIsAdmin(u.is_superuser);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setSavingEdit(true);
+    setMessage(null);
+
     try {
-      await api.updateAdminUser(u.id, { is_superuser: !u.is_superuser });
-      setMessage({ type: 'success', text: `Updated ${u.email} permissions.` });
+      const payload: any = {
+        full_name: editFullName.trim() || undefined,
+        is_superuser: editIsAdmin,
+      };
+      if (editPassword.trim()) {
+        payload.password = editPassword.trim();
+      }
+
+      await api.updateAdminUser(editingUser.id, payload);
+      setMessage({ type: 'success', text: `Successfully updated user ${editingUser.email}.` });
+      setEditingUser(null);
       fetchAdminData();
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+      setMessage({ type: 'error', text: err.message || 'Failed to update user' });
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -133,7 +164,7 @@ export default function AdminPanelPage() {
             Admin <span className="gradient-text">Control Center</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Team access governance, user permissions, and database operations.
+            Team access governance, username & password management, and database operations.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -334,12 +365,13 @@ export default function AdminPanelPage() {
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '6px' }}>
                         <button
-                          onClick={() => handleToggleAdmin(u)}
+                          onClick={() => openEditModal(u)}
                           className="btn btn-secondary btn-sm"
-                          style={{ fontSize: '11px', padding: '4px 8px' }}
-                          title={u.is_superuser ? 'Revoke Admin' : 'Grant Admin'}
+                          style={{ fontSize: '11px', padding: '4px 8px', gap: '4px' }}
+                          title="Edit User & Set Password"
                         >
-                          {u.is_superuser ? 'Demote' : 'Make Admin'}
+                          <Edit3 size={11} />
+                          <span>Edit / Password</span>
                         </button>
                         <button
                           onClick={() => handleToggleActive(u)}
@@ -417,7 +449,7 @@ export default function AdminPanelPage() {
             <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                  Full Name
+                  Full Name / Username
                 </label>
                 <input
                   type="text"
@@ -444,7 +476,7 @@ export default function AdminPanelPage() {
 
               <div>
                 <label style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                  Temporary Password *
+                  Account Password *
                 </label>
                 <input
                   type="password"
@@ -473,6 +505,91 @@ export default function AdminPanelPage() {
                 </button>
                 <button type="submit" disabled={creatingUser} className="btn btn-primary">
                   {creatingUser ? 'Creating...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User & Reset Password Modal */}
+      {editingUser && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '440px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700 }}>Edit Member & Reset Password</h3>
+              <button onClick={() => setEditingUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '18px' }}>
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                  Email Address (Read-only)
+                </label>
+                <input
+                  type="email"
+                  className="input"
+                  value={editingUser.email}
+                  disabled
+                  style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                  Full Name / Username
+                </label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g. Sarah Connor"
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                  Set New Password (leave blank to keep existing)
+                </label>
+                <input
+                  type="password"
+                  className="input"
+                  placeholder="Enter new password to reset..."
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  minLength={6}
+                />
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={editIsAdmin}
+                  onChange={(e) => setEditIsAdmin(e.target.checked)}
+                  style={{ accentColor: '#6366f1' }}
+                />
+                <span>Administrator Privileges</span>
+              </label>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+                <button type="button" onClick={() => setEditingUser(null)} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button type="submit" disabled={savingEdit} className="btn btn-primary">
+                  {savingEdit ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
