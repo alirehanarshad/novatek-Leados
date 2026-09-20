@@ -76,7 +76,7 @@ export default function DashboardPage() {
       {/* KPI Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
         {/* Card 1 */}
-        <div className="glass-panel" style={{ padding: '22px' }}>
+        <div className="glass-panel kpi-tile-3d" style={{ padding: '22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Total Leads</span>
             <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(99, 102, 241, 0.15)' }}>
@@ -93,7 +93,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 2 */}
-        <div className="glass-panel" style={{ padding: '22px' }}>
+        <div className="glass-panel kpi-tile-3d" style={{ padding: '22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Enriched Contact Info</span>
             <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(6, 182, 212, 0.15)' }}>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 3 */}
-        <div className="glass-panel" style={{ padding: '22px' }}>
+        <div className="glass-panel kpi-tile-3d" style={{ padding: '22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Qualified Prospects (AI)</span>
             <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)' }}>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 4 */}
-        <div className="glass-panel" style={{ padding: '22px' }}>
+        <div className="glass-panel kpi-tile-3d" style={{ padding: '22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Outreach Dispatched</span>
             <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.15)' }}>

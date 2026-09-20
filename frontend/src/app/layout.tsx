@@ -16,6 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <div className="bg-ambient-orb orb-1" />
+        <div className="bg-ambient-orb orb-2" />
+        <div className="bg-ambient-orb orb-3" />
         <AuthProvider>
           <AuthGuard>
             {children}
