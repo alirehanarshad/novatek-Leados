@@ -24,7 +24,8 @@ const navigation = [
   { name: 'Lead CRM', href: '/leads', icon: Users },
   { name: 'AI Outreach Lab', href: '/outreach', icon: Sparkles },
   { name: 'Campaigns', href: '/campaigns', icon: FolderKanban },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Admin Panel', href: '/admin', icon: ShieldCheck },
+  { name: 'Settings & Keys', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {

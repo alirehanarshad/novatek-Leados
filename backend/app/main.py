@@ -14,6 +14,8 @@ from app.api.scrape import router as scrape_router
 from app.api.ai import router as ai_router
 from app.api.campaigns import router as campaigns_router
 from app.api.dashboard import router as dashboard_router
+from app.api.settings import router as settings_router, load_dynamic_settings
+from app.api.admin import router as admin_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +27,6 @@ async def seed_initial_demo_data():
             count = lead_count_res.scalar_one()
             if count == 0:
                 logger.info("Database is empty. Seeding initial demo data...")
-                # Create default campaign
                 camp = Campaign(
                     name="Q3 High-Intent Local Services",
                     description="Outbound pipeline for regional commercial services and medical clinics.",
@@ -37,7 +38,6 @@ async def seed_initial_demo_data():
                 session.add(camp)
                 await session.flush()
 
-                # Seed sample leads
                 sample_leads = [
                     Lead(
                         campaign_id=camp.id,
@@ -88,54 +88,7 @@ async def seed_initial_demo_data():
                         crawl_status="completed",
                         scraped_title="Vanguard Growth | Scaling Tech & B2B Companies",
                         scraped_meta_desc="Data-driven growth marketing, paid acquisition, and inbound funnel architecture."
-                    ),
-                    Lead(
-                        campaign_id=camp.id,
-                        place_id="demo_place_3",
-                        name="Lumina Architectural Studio",
-                        category="commercial.architecture",
-                        address="785 Market St, San Francisco, CA 94103",
-                        city="San Francisco",
-                        state="CA",
-                        country="United States",
-                        phone="(415) 555-0188",
-                        email="hello@luminaarchitects.design",
-                        website="https://luminaarchitects.design",
-                        linkedin_url="https://linkedin.com/company/lumina-studio",
-                        rating=5.0,
-                        review_count=19,
-                        icp_score=78,
-                        ai_qualification_summary="Boutique high-end residential and commercial architecture practice.",
-                        ai_pain_points="Commercial developer networking, RFP procurement pipelines.",
-                        ai_value_prop="Targeted outreach to commercial property managers and real estate funds.",
-                        ai_provider_used="openai",
-                        status="discovered",
-                        crawl_status="completed",
-                        scraped_title="Lumina Studio | Modern Architecture & Sustainable Design",
-                        scraped_meta_desc="Award-winning architecture and urban design studio based in San Francisco."
-                    ),
-                    Lead(
-                        campaign_id=camp.id,
-                        place_id="demo_place_4",
-                        name="Horizon Wealth Partners",
-                        category="financial.bank",
-                        address="555 California St, San Francisco, CA 94104",
-                        city="San Francisco",
-                        state="CA",
-                        country="United States",
-                        phone="(415) 555-0177",
-                        email="advisory@horizonwealth.com",
-                        website="https://horizonwealth.com",
-                        rating=4.7,
-                        review_count=56,
-                        icp_score=85,
-                        ai_qualification_summary="Independent wealth advisory firm managing accredited investor portfolios.",
-                        ai_pain_points="HNW lead generation and automated event webinar booking.",
-                        ai_value_prop="High-trust relationship outreach campaigns for private wealth clients.",
-                        ai_provider_used="gemini",
-                        status="contacted",
-                        crawl_status="completed"
-                    ),
+                    )
                 ]
                 for l in sample_leads:
                     session.add(l)
@@ -148,6 +101,7 @@ async def seed_initial_demo_data():
 async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     await init_db()
+    await load_dynamic_settings()
     await seed_initial_demo_data()
     yield
 
@@ -174,6 +128,8 @@ app.include_router(scrape_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
 app.include_router(campaigns_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
+app.include_router(settings_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 @app.get("/api/health")
 async def health_check():
