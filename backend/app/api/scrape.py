@@ -181,16 +181,19 @@ async def _process_geoapify_job(job_id: int, request_data: dict):
 
                 return lead
 
-            # Execute candidates concurrently in chunks of 6
-            chunk_size = 6
-            for i in range(0, len(places), chunk_size):
-                chunk = places[i:i + chunk_size]
-                results = await asyncio.gather(*[process_candidate(p) for p in chunk], return_exceptions=True)
-                for res in results:
-                    if isinstance(res, Lead):
-                        session.add(res)
-                        processed_leads.append(res)
-                await session.commit()
+            # Execute candidates with high parallelism using asyncio.Semaphore
+            sem = asyncio.Semaphore(25)
+
+            async def bounded_process(p: Dict[str, Any]):
+                async with sem:
+                    return await process_candidate(p)
+
+            results = await asyncio.gather(*[bounded_process(p) for p in places], return_exceptions=True)
+            for res in results:
+                if isinstance(res, Lead):
+                    session.add(res)
+                    processed_leads.append(res)
+            await session.commit()
 
             job.total_processed = len(processed_leads)
             job.total_enriched = enriched_count

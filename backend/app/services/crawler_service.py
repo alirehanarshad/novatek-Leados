@@ -50,13 +50,23 @@ class CrawlerService:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9"
         }
+        self.limits = httpx.Limits(max_connections=150, max_keepalive_connections=40)
+
+    def _get_client(self, timeout: float = 4.0) -> httpx.AsyncClient:
+        return httpx.AsyncClient(
+            headers=self.headers,
+            limits=self.limits,
+            timeout=timeout,
+            follow_redirects=True,
+            verify=False
+        )
 
     async def find_website_for_lead(self, business_name: str, city: Optional[str] = None) -> Optional[str]:
         """Discovers official business website when Geoapify has no URL recorded."""
         query = f"{business_name} {city or ''} official website"
         try:
             url = f"https://html.duckduckgo.com/html/?q={query}"
-            async with httpx.AsyncClient(headers=self.headers, timeout=8.0, follow_redirects=True, verify=False) as client:
+            async with self._get_client(timeout=3.0) as client:
                 resp = await client.get(url)
                 if resp.status_code == 200:
                     soup = BeautifulSoup(resp.text, "html.parser")
@@ -79,7 +89,7 @@ class CrawlerService:
         contacts = {"phone": None, "email": None}
         try:
             url = f"https://html.duckduckgo.com/html/?q={query}"
-            async with httpx.AsyncClient(headers=self.headers, timeout=8.0, follow_redirects=True, verify=False) as client:
+            async with self._get_client(timeout=3.0) as client:
                 resp = await client.get(url)
                 if resp.status_code == 200:
                     text = resp.text
@@ -128,7 +138,7 @@ class CrawlerService:
         discovered_contact_urls = set()
 
         try:
-            async with httpx.AsyncClient(headers=self.headers, follow_redirects=True, timeout=12.0, verify=False) as client:
+            async with self._get_client(timeout=4.0) as client:
                 # 1. Fetch Homepage
                 resp = await client.get(url)
                 if resp.status_code >= 400:
@@ -139,29 +149,31 @@ class CrawlerService:
                 contact_links = self._extract_from_html(html_content, str(resp.url), result)
                 discovered_contact_urls.update(contact_links)
 
-                # 2. Add standard known subpaths if not already discovered
-                for path in [
-                    "/contact", "/contact-us", "/kontakt", "/impressum", "/about", 
-                    "/about-us", "/find-us", "/location", "/get-in-touch", "/book"
-                ]:
+                # Early exit: if both email and phone found on homepage, skip subpages
+                if result["emails"] and result["phones"]:
+                    return self._finalize_result(result)
+
+                # 2. Add top contact candidate paths if still missing contacts
+                for path in ["/contact", "/contact-us", "/kontakt", "/impressum"]:
                     candidate = urljoin(str(resp.url), path)
                     if candidate not in discovered_contact_urls:
                         discovered_contact_urls.add(candidate)
 
-                # 3. Crawl top candidate contact pages concurrently (max 4 subpages)
-                to_crawl = list(discovered_contact_urls)[:4]
-                tasks = [self._fetch_subpage(client, sub_url, result) for sub_url in to_crawl]
-                await asyncio.gather(*tasks, return_exceptions=True)
+                # 3. Crawl max 2 candidate contact subpages concurrently with tight 2.5s timeout
+                to_crawl = list(discovered_contact_urls)[:2]
+                if to_crawl:
+                    tasks = [self._fetch_subpage(client, sub_url, result) for sub_url in to_crawl]
+                    await asyncio.gather(*tasks, return_exceptions=True)
 
         except Exception as e:
-            logger.warning(f"Error crawling {url}: {e}")
+            logger.debug(f"Error crawling {url}: {e}")
             result["status"] = "crawl_failed"
 
         return self._finalize_result(result)
 
     async def _fetch_subpage(self, client: httpx.AsyncClient, sub_url: str, result: Dict[str, Any]):
         try:
-            resp = await client.get(sub_url, timeout=8.0)
+            resp = await client.get(sub_url, timeout=2.5)
             if resp.status_code == 200:
                 self._extract_from_html(resp.text, str(resp.url), result)
         except Exception:
